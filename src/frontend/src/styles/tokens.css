@@ -1,0 +1,99 @@
+:root {
+  /* Theater dark surfaces */
+  --bg-canvas: #141414;
+  --bg-surface: #181818;
+  --bg-raised: #222222;
+  --bg-hover: #2c2c2c;
+  --bg-overlay: rgba(0, 0, 0, 0.82);
+
+  /* Brand accent */
+  --brand-red: #e50914;
+  --brand-red-hover: #f6121d;
+  --brand-red-active: #b20710;
+  --brand-red-subtle: rgba(229, 9, 20, 0.16);
+
+  /* Typography hierarchy */
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #a3a3a3;
+  --text-inverse: #141414;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.24);
+
+  /* Semantic statuses */
+  --status-success: #46d369;
+  --status-success-bg: rgba(70, 211, 105, 0.14);
+  --status-warning: #e5a00d;
+  --status-warning-bg: rgba(229, 160, 13, 0.16);
+  --status-danger: #e50914;
+  --status-danger-bg: rgba(229, 9, 20, 0.16);
+
+  /* DJCTQ Parental Rating tokens */
+  --rating-L: #0c9447;
+  --rating-10: #00aeef;
+  --rating-12: #f7d117;
+  --rating-14: #f58220;
+  --rating-16: #ed1c24;
+  --rating-18: #181818;
+
+  /* Art-directed movie cover themes (zero purple/indigo defaults) */
+  --poster-noir-bg: linear-gradient(155deg, #2b090c 0%, #161616 58%, #0d0d0d 100%);
+  --poster-noir-accent: #e50914;
+
+  --poster-amber-bg: linear-gradient(155deg, #422709 0%, #1c1712 58%, #100e0c 100%);
+  --poster-amber-accent: #e5a00d;
+
+  --poster-cyan-bg: linear-gradient(155deg, #0b2d39 0%, #121c22 58%, #0c1013 100%);
+  --poster-cyan-accent: #38bdf8;
+
+  --poster-emerald-bg: linear-gradient(155deg, #0c3322 0%, #121d18 58%, #0b100e 100%);
+  --poster-emerald-accent: #46d369;
+
+  --poster-crimson-bg: linear-gradient(155deg, #4a1216 0%, #1f1415 58%, #110d0d 100%);
+  --poster-crimson-accent: #f87171;
+
+  --poster-slate-bg: linear-gradient(155deg, #2a2d32 0%, #191a1d 58%, #101113 100%);
+  --poster-slate-accent: #d4d4d8;
+
+  /* Profile avatar colors */
+  --avatar-red: #b20710;
+  --avatar-amber: #b45309;
+  --avatar-teal: #0f766e;
+  --avatar-cobalt: #1d4ed8;
+  --avatar-emerald: #15803d;
+  --avatar-zinc: #3f3f46;
+
+  /* Typography families */
+  --font-display: 'Bebas Neue', Impact, sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Radii & Shadows */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --shadow-modal: 0 24px 48px rgba(0, 0, 0, 0.78), 0 0 0 1px var(--border-subtle);
+  --shadow-toast: 0 12px 28px rgba(0, 0, 0, 0.65);
+
+  /* Layout */
+  --navbar-height: 64px;
+  --container-max: 1360px;
+
+  /* Z-index layers */
+  --z-nav: 30;
+  --z-modal: 50;
+  --z-toast: 70;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
