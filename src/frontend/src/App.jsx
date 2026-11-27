@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Database, RefreshCw } from 'lucide-react';
 import {
-  loadState,
-  saveState,
-  resetState,
-  createRecord,
-  updateRecord,
-  deleteRecord,
-} from './data/store.js';
+  EMPTY_DB,
+  fetchState,
+  createRecordApi,
+  updateRecordApi,
+  deleteRecordApi,
+  resetDatabaseApi,
+} from './data/api.js';
 import Navbar from './components/Navbar.jsx';
 import CatalogView from './components/CatalogView.jsx';
 import CrudView from './components/CrudView.jsx';
@@ -18,12 +19,11 @@ import { BrandSplash } from './components/LoadingStates.jsx';
 import Toast from './components/Toast.jsx';
 
 export default function App() {
-  const [db, setDb] = useState(() => loadState());
+  const [db, setDb] = useState(EMPTY_DB);
+  const [loadingDb, setLoadingDb] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [activeTab, setActiveTab] = useState('catalog');
-  const [activeProfileId, setActiveProfileId] = useState(() => {
-    const initial = loadState();
-    return initial.perfis[0]?.id_perfil || 1;
-  });
+  const [activeProfileId, setActiveProfileId] = useState(1);
   const [showSplash, setShowSplash] = useState(true);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +31,28 @@ export default function App() {
   const [profileGateOpen, setProfileGateOpen] = useState(false);
   const [quickMovieModal, setQuickMovieModal] = useState({ open: false, record: null });
   const [toasts, setToasts] = useState([]);
+
+  const loadInitialData = useCallback(async () => {
+    setLoadingDb(true);
+    setLoadError('');
+    const res = await fetchState();
+    if (!res.ok) {
+      setLoadError(res.error || 'Falha ao carregar o banco de dados.');
+      setLoadingDb(false);
+      return;
+    }
+    const nextState = res.state || EMPTY_DB;
+    setDb(nextState);
+    setActiveProfileId((prev) => {
+      if (nextState.perfis.some((p) => p.id_perfil === prev)) return prev;
+      return nextState.perfis[0]?.id_perfil || 1;
+    });
+    setLoadingDb(false);
+  }, []);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   useEffect(() => {
     const reduced =
@@ -46,10 +68,6 @@ export default function App() {
     const t = window.setTimeout(() => setIsLoadingProfile(false), 260);
     return () => window.clearTimeout(t);
   }, [isLoadingProfile]);
-
-  useEffect(() => {
-    saveState(db);
-  }, [db]);
 
   const activeProfile = useMemo(() => {
     return db.perfis.find((p) => p.id_perfil === activeProfileId) || db.perfis[0] || null;
@@ -72,73 +90,87 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const syncProfileSelection = useCallback((nextState) => {
+    setActiveProfileId((prev) => {
+      if (nextState.perfis.some((p) => p.id_perfil === prev)) return prev;
+      return nextState.perfis[0]?.id_perfil || 1;
+    });
+  }, []);
+
   const handleCreate = useCallback(
-    (table, payload) => {
-      const res = createRecord(db, table, payload);
+    async (table, payload) => {
+      const res = await createRecordApi(table, payload);
       if (!res.ok) {
         pushToast(res.error, 'error');
         return res;
       }
       setDb(res.state);
+      syncProfileSelection(res.state);
       pushToast('Registro cadastrado com sucesso.', 'success');
       return res;
     },
-    [db, pushToast]
+    [pushToast, syncProfileSelection]
   );
 
   const handleUpdate = useCallback(
-    (table, key, payload) => {
-      const res = updateRecord(db, table, key, payload);
+    async (table, key, payload) => {
+      const res = await updateRecordApi(table, key, payload);
       if (!res.ok) {
         pushToast(res.error, 'error');
         return res;
       }
       setDb(res.state);
+      syncProfileSelection(res.state);
       pushToast('Alterações salvas.', 'success');
       return res;
     },
-    [db, pushToast]
+    [pushToast, syncProfileSelection]
   );
 
   const handleDelete = useCallback(
-    (table, key) => {
-      const res = deleteRecord(db, table, key);
+    async (table, key) => {
+      const res = await deleteRecordApi(table, key);
       if (!res.ok) {
         pushToast(res.error, 'error');
         return res;
       }
       setDb(res.state);
+      syncProfileSelection(res.state);
       if (table === 'filmes' && movieModal.id === Number(key)) {
         setMovieModal({ id: null, focus: 'info' });
       }
       pushToast('Registro excluído.', 'success');
       return res;
     },
-    [db, movieModal.id, pushToast]
+    [movieModal.id, pushToast, syncProfileSelection]
   );
 
-  const handleResetDatabase = useCallback(() => {
-    const fresh = resetState();
-    setDb(fresh);
-    setActiveProfileId(fresh.perfis[0]?.id_perfil || 1);
+  const handleResetDatabase = useCallback(async () => {
+    const res = await resetDatabaseApi();
+    if (!res.ok) {
+      pushToast(res.error, 'error');
+      return res;
+    }
+    setDb(res.state);
+    setActiveProfileId(res.state.perfis[0]?.id_perfil || 1);
     setMovieModal({ id: null, focus: 'info' });
     pushToast('Banco restaurado com os dados iniciais.', 'success');
+    return res;
   }, [pushToast]);
 
   const handleSaveReview = useCallback(
-    (payload, exists) => {
+    async (payload, exists) => {
       if (exists) {
-        handleUpdate('avaliacoes', `${payload.id_perfil}-${payload.id_filme}`, payload);
-      } else {
-        handleCreate('avaliacoes', payload);
+        return handleUpdate('avaliacoes', `${payload.id_perfil}-${payload.id_filme}`, payload);
       }
+      return handleCreate('avaliacoes', payload);
     },
     [handleCreate, handleUpdate]
   );
 
   return (
     <div>
-      {showSplash && <BrandSplash />}
+      {(showSplash || loadingDb) && <BrandSplash />}
 
       <Navbar
         activeTab={activeTab}
@@ -150,30 +182,52 @@ export default function App() {
       />
 
       <main className="app-main">
-        {activeTab === 'catalog' && (
-          <CatalogView
-            db={db}
-            activeProfile={activeProfile}
-            isLoadingProfile={isLoadingProfile}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onOpenMovie={(id, focus) => setMovieModal({ id, focus })}
-            onOpenQuickAddMovie={() => setQuickMovieModal({ open: true, record: null })}
-            onOpenProfileGate={() => setProfileGateOpen(true)}
-          />
-        )}
+        {loadError ? (
+          <div className="page-container">
+            <div className="crud-panel">
+              <div className="empty-state">
+                <Database size={34} aria-hidden="true" />
+                <h1 className="empty-state-title">Servidor back-end indisponível</h1>
+                <p className="empty-state-desc">{loadError}</p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={loadInitialData}
+                >
+                  <RefreshCw size={15} aria-hidden="true" />
+                  <span>Tentar novamente</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'catalog' && (
+              <CatalogView
+                db={db}
+                activeProfile={activeProfile}
+                isLoadingProfile={isLoadingProfile}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onOpenMovie={(id, focus) => setMovieModal({ id, focus })}
+                onOpenQuickAddMovie={() => setQuickMovieModal({ open: true, record: null })}
+                onOpenProfileGate={() => setProfileGateOpen(true)}
+              />
+            )}
 
-        {activeTab === 'crud' && (
-          <CrudView
-            db={db}
-            onCreate={handleCreate}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-            onResetDatabase={handleResetDatabase}
-          />
-        )}
+            {activeTab === 'crud' && (
+              <CrudView
+                db={db}
+                onCreate={handleCreate}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+                onResetDatabase={handleResetDatabase}
+              />
+            )}
 
-        {activeTab === 'reports' && <ReportsView db={db} />}
+            {activeTab === 'reports' && <ReportsView db={db} />}
+          </>
+        )}
       </main>
 
       <footer className="app-footer">

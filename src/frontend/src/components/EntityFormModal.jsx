@@ -110,6 +110,7 @@ export default function EntityFormModal({
 }) {
   const [form, setForm] = useState({});
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const isEditing = Boolean(record);
 
@@ -117,6 +118,7 @@ export default function EntityFormModal({
     if (open) {
       setForm(buildInitialForm(table, db, record));
       setError('');
+      setSubmitting(false);
     }
   }, [open, table, record]);
 
@@ -138,13 +140,19 @@ export default function EntityFormModal({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = onSubmit(table, form, record);
-    if (res && !res.ok) {
-      setError(res.error);
-    } else {
-      onClose();
+    setError('');
+    setSubmitting(true);
+    try {
+      const res = await onSubmit(table, form, record);
+      if (res && !res.ok) {
+        setError(res.error || 'Erro ao salvar registro.');
+      } else {
+        onClose();
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -845,11 +853,15 @@ export default function EntityFormModal({
           </div>
 
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>
               Cancelar
             </button>
-            <button type="submit" className="btn btn-primary">
-              {isEditing ? 'Salvar alterações' : 'Cadastrar registro'}
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting
+                ? 'Salvando...'
+                : isEditing
+                ? 'Salvar alterações'
+                : 'Cadastrar registro'}
             </button>
           </div>
         </form>

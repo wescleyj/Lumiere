@@ -29,6 +29,7 @@
 - 2026-11-26 — architecture: Pure relational client-side store persisted in `localStorage` (`lumiere_db_v1`) covering all 8 strong entities and N:M / 1:N relationships (`Atua`, `Pertence_a`, `Avalia`) from `docs/Modelo_Conceitual.md`, plus dynamic calculation of all 5 required SQL reports.
 - 2026-11-26 — build: Implemented all 10 UI components and data layer strictly adhering to CSS custom properties and `prefers-reduced-motion`.
 - 2026-11-26 — polish: Fixed search input icon padding order, added bespoke SVG cinema poster motifs (`posterArt.jsx`), added `BrandSplash`/`CatalogSkeleton`/`TableSkeleton` (`LoadingStates.jsx`), hero carousel, "Continuar assistindo" & "Em alta no Lumiere" rails, KPI strip in CRUD, and inline metric bars in SQL reports.
+- 2026-11-27 — backend-integration: Replaced the temporary `localStorage` client store with live REST integration (`src/frontend/src/data/api.js` + Vite `/api` proxy) backed by Node.js/Express (`src/backend/`) and PostgreSQL (`sql/`), including live SQL execution for all 5 analytical reports.
 
 ## Components
 - `Navbar` (`src/frontend/src/components/Navbar.jsx`)
@@ -47,4 +48,3 @@
 ## Non-Goals
 - No real video streaming or media transcoding
 - No TypeScript compilation step
-- No modification to `src/backend/` or `sql/`

@@ -359,7 +359,7 @@ export default function CrudView({
                       <div className="cell-secondary">{row.email}</div>
                     </td>
                     <td>{row.cpf}</td>
-                    <td>{calculateAge(row.data_nascimento)} anos</td>
+                    <td>{row.idade ?? calculateAge(row.data_nascimento)} anos</td>
                     <td>{formatDate(row.data_cadastro)}</td>
                     {actionsCell}
                   </tr>
@@ -594,9 +594,10 @@ export default function CrudView({
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => {
-                  onDelete(confirmDelete.table, confirmDelete.key);
+                onClick={async () => {
+                  const target = confirmDelete;
                   setConfirmDelete(null);
+                  await onDelete(target.table, target.key);
                 }}
               >
                 Excluir registro
@@ -614,7 +615,7 @@ export default function CrudView({
             </div>
             <div className="modal-body">
               <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                Todas as alterações locais serão substituídas pelos registros iniciais do banco Lumiere.
+                Todas as alterações no banco de dados PostgreSQL serão substituídas pelos registros iniciais do Lumiere.
               </p>
             </div>
             <div className="modal-footer">
@@ -624,9 +625,9 @@ export default function CrudView({
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => {
-                  onResetDatabase();
+                onClick={async () => {
                   setConfirmReset(false);
+                  await onResetDatabase();
                 }}
               >
                 Restaurar dados
